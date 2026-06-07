@@ -1,0 +1,6 @@
+.env
+attendance.db
+__pycache__/
+venv/
+.pytest_cache/
+*.pyc
