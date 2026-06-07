@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from dotenv import load_dotenv
@@ -35,6 +36,11 @@ def main() -> None:
     application.add_handler(CommandHandler("monthly", handlers.monthly))
     application.add_handler(CommandHandler("employees", handlers.employees))
     application.add_handler(CallbackQueryHandler(handlers.button_handler))
+
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
     application.run_polling(drop_pending_updates=True)
 
