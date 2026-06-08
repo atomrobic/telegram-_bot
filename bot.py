@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from dotenv import load_dotenv
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler
@@ -19,6 +22,22 @@ def configure_logging() -> None:
         format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
         level=logging.INFO,
     )
+
+
+class DummyHandler(BaseHTTPRequestHandler):
+    """Dummy web server to keep Render Web Service alive."""
+    def do_GET(self) -> None:
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b"Bot is running successfully!")
+
+
+def run_dummy_server() -> None:
+    """Start the dummy web server on the port provided by Render."""
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), DummyHandler)
+    server.serve_forever()
 
 
 def main() -> None:
@@ -41,6 +60,9 @@ def main() -> None:
         asyncio.get_event_loop()
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
+
+    # Start the dummy web server in a background thread
+    threading.Thread(target=run_dummy_server, daemon=True).start()
 
     application.run_polling(drop_pending_updates=True)
 
